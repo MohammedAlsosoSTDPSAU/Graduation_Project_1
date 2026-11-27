@@ -275,3 +275,106 @@ Once items 1–6 are done, I would expect the chapter to rate about 8–8.5/10 f
    - Target presentation and decision type, before Chapter 3.1.
    - GP1/GP2 split.
    - Template font size and top margin (f1, f2).
+
+---
+
+## Final pre-submission check
+
+**Date:** 2026-11-27
+**Files checked:** `chapter1.md` and `Chapter1_Final.pdf` (20 pp.), diffed against `chapter1_src_v2_prefinal.md`; `refs.py` diffed against `refs_v2_prefinal.py`.
+**Sources consulted for this check:**
+- The FDA guidance PDF, fetched again by me on 2026-11-27.
+- The approved workflow PDF, read as text and as a rendered image so that agent and deterministic node colours could be checked.
+- Venue listings for Cemri (neurips.cc 2025 virtual pages) and Kapoor (mlanthology.org TMLR 2025).
+
+### 1. FDA accuracy
+
+| Chapter statement | Cited | What the FDA PDF says | Verdict |
+|---|---|---|---|
+| The guidance concerns HCP-facing software in the US and is not legally binding | [20, pp. 4–5] | p. 4: scope is CDS "intended for health care professionals (HCPs)"; "not binding on FDA or the public". p. 5: "do not establish legally enforceable responsibilities". | Accurate. Patient-facing CDS is handled in Section IV(3) as a device, which does not contradict the chapter. |
+| Four criteria for falling outside the device definition; the fourth is independent review of the basis rather than relying primarily on the recommendations | [20, p. 6] | The criteria appear on pp. 5–6, and Criterion 4 wording matches. | Accurate. The criteria are statutory (FD&C Act §520(o)(1)(E)) and the guidance *explains* them, so "sets out" is slightly loose (F7). |
+| Critical, time-sensitive functions do not meet Criterion 4, because an HCP is unlikely to have time to review the basis | [20, pp. 14–15] | p. 14 states exactly this, with the same reason. | Accurate. |
+| Time-critical nature and level of automation are factors in that assessment | [20, pp. 14–15] | p. 15: "FDA considers the (a) level of software automation and (b) time-critical nature…" | Accurate. |
+| Automation bias definition | [20, p. 15] | Verbatim match. | Accurate. |
+| Examples of functions that remain devices include software that identifies signs of patient deterioration and alerts an HCP | [20, p. 24] | Device Example 24 analyses **hourly pulse-oximetry and heart-rate measurements**. It fails Criterion 1 because it "analyzes a pattern", and fails Criteria 2, 3 and 4 because it gives a specific diagnostic output and supports time-critical decisions. | Accurate but incomplete (F6). The chapter omits that the example analyses a physiological pattern, which the prototype excludes. The omission errs toward caution, so it is not misleading in a harmful direction. |
+
+**Regulatory claims.** No regulatory classification, compliance, clearance or non-device claim about the prototype remains anywhere in the chapter:
+- 1.5.7 states "makes no regulatory classification of the prototype".
+- Table 1.4 excludes any such claim.
+- 1.3 now reads "aims to operationalize".
+
+### 2. Workflow consistency
+
+The chapter checks out against the approved workflow on every point the coordinator listed:
+- The stage order is correct: pack selection, then red flags, then required fields, before any LLM.
+- Red flags run before the completeness check.
+- The six agent roles match Agents 1, 2, 2c, 3, 4 and 5.
+- The calculators run in parallel with the agents.
+- The verifier returns issues to Agent 4 at most once, and failing twice gives ABSTAIN.
+- The decision core runs hard constraints, then weighted ranking, then the robustness test across missing-value ranges.
+- Seven outcomes map to five statuses, and each outcome is triggered as the workflow shows.
+- The report composer is deterministic, which matches its dark-grey node.
+- The physician accepts, edits or rejects with a reason, and the choice is logged.
+
+**Target pathway.** It is still described as not selected (1.5.2), and no specialty is named. "Abdominal pain" appears only in the Hager literature summary.
+
+There are two inaccuracies (F1, F4) and two minor gaps (F5, F8); see the issue table below.
+
+### 3. Fair comparison
+
+SO4, RQ4, the new paragraph after the RQs, Table 1.3's SO4 row and 1.5.3 now all treat computational budget (calls, tokens, latency, cost) as something to match where practicable and always report, not just the number of calls. They also fix the model version and decoding settings across systems. The baseline configurations are explicitly deferred to Chapter 3, so nothing unapproved is presented as decided.
+
+One internal contradiction (F2) and one feasibility gap (F3) remain.
+
+### 4. Citations
+
+- **Numbering:** citations appear in first-use order 1–40, with all 40 used. Every reference-list entry is identical to `refs.py`, grouped citations are in ascending order, and the pinpoint citations to [20] are well-formed IEEE.
+- **Peer review and preprint status:**
+  - Cemri [36] is now cited as NeurIPS 2025, confirmed on neurips.cc.
+  - Kapoor [37] is now cited as TMLR 2025, confirmed on the ML Anthology.
+  - The in-text "preprint" wording has been correctly removed for both.
+  - HealthBench [29] and Gorenshtein [30] are still labelled as preprints, both in the text and in the reference list.
+- **Numbers:** every figure in the text matches the evidence report and notes. No new figures were introduced except bibliographic metadata.
+  - The metadata newly added for [4], [19], [21], [26], [32] and [39] is plausible and recorded as verified in `refs.py`. I did not independently re-verify it.
+  - Still incomplete: [16] has no volume or pages, [34] has no track or pages, [35] has no article number, and [22] has no official URL. These are Minor and acceptable for a GP1 submission if noted.
+
+### 5. Layout
+
+Layout is clean:
+- No blank pages and no orphaned headings.
+- All four tables now sit whole on a single page (pp. 8, 9, 13, 16 in the printed numbering).
+- Captions are consistent.
+- Page 12 has about one-third of the page left blank because Table 1.3 moved to the next page. This is acceptable.
+
+### Issue table
+
+| # | Severity | Location | Problem | Fix |
+|---|---|---|---|---|
+| F1 | **Major** | 1.1.4: "The LLM agents contribute content, but the final status is set by the deterministic steps of the workflow." Also Table 1.2: "set by deterministic workflow steps (… claim verification …)" | In the approved workflow, **Agent 5 · Verify is an LLM agent** (blue node: rules V1–V5 plus claim-to-source check V6). The "verification fails twice → ABSTAIN" outcome therefore rests on an LLM judgement. Only the routing gate is deterministic. As written, the chapter misdescribes one of the seven outcomes and overstates how far LLM judgement is excluded. | 1.1.4: "…the routing between outcomes is deterministic, and five of the seven outcomes are decided by deterministic rules; the verification outcome depends on the verifier agent's judgement, which is itself evaluated in RQ2." Table 1.2: "set by deterministic gates over rule results and the verifier's verdict, rather than by the model's self-reported confidence." |
+| F2 | **Major** | Paragraph after the RQs: "The comparison will therefore keep the base model version, decoding settings, **tool and retrieval access** and input format the same for **all systems**" | This contradicts SO4, whose first baseline is "a single LLM without tools". It also slightly contradicts the "same single agent **equipped with the framework's verifier**" variant. An examiner will catch it immediately. | "…keep the base model version, decoding settings and input format the same for all systems, and tool and retrieval access the same for all tool-using systems…" |
+| F3 | Minor | Same paragraph, 1.5.3 and A4: "same… decoding settings" for all systems | A budget-matched variant is usually built by repeated sampling and voting [33]. That needs a non-zero sampling temperature, which may differ from the framework's settings. As written, the plan may be infeasible. | Add: "except where a baseline's method requires sampling; any such difference will be stated and reported." |
+| F4 | Minor | 1.1.4: "LLM agents then extract facts that must quote the case note"; SO1's list of deterministic components | In the workflow, quoting is enforced by a **deterministic Grounding check**: a fact that does not quote the note becomes a gap. The chapter attributes this to the LLM agent and leaves the grounding check out of SO1's deterministic components. | "Agent 1 extracts facts tied to the case note, and a deterministic grounding check turns any fact that does not quote the note into a gap." Add "grounding check" to SO1's deterministic list. |
+| F5 | Minor | 1.5.2: "The output is a single report with … the results of the safety checks and a record of every processing step" | The workflow's report contains "status, ranked options, reasons, sources". The step record is the separate append-only **audit log**. Safety-check results in the report are not shown in the workflow. | "…the ranked options where applicable, with reasons and sources; every processing step is recorded in an append-only audit log." Drop the safety-check results unless the design adds them. |
+| F6 | Minor | 1.5.7: "Its examples of functions that remain devices include software that identifies signs of patient deterioration and alerts an HCP [20, p. 24]" | This omits that Example 24 analyses hourly pulse-oximetry and heart-rate measurements (a "pattern", failing Criterion 1) and gives a specific output. The analogy to ESCALATE_NOW is therefore looser than "directly relevant" implies. | "…include software that analyses repeated vital-sign measurements to identify patient deterioration and alerts an HCP; FDA treats it as a device partly because it analyses a physiological pattern and supports time-critical decisions [20, p. 24]. The time-critical element is relevant to ESCALATE_NOW…" |
+| F7 | Minor | 1.1.5: "sets out four criteria" | The four criteria are statutory (§520(o)(1)(E)); the guidance explains how FDA interprets them. | "explains the four statutory criteria that a software function must meet…" |
+| F8 | Minor | 1.5.1: "explains why it cannot: because information is missing, because the case should be escalated or because the case is outside its scope"; Table 1.2 row 1 "out-of-scope cases rejected" | 1.5.1 omits the verification-failure ABSTAIN. In Table 1.2 row 1, out-of-scope rejection is done by pack selection, not by the safety checks named in the mechanism column. | 1.5.1: add "or because its claims could not be verified". Table 1.2 row 1 mechanism: "Pack selection, red-flag rules and required-field checks before any LLM reasoning". |
+| F9 | Minor | 1.1.4 (now two long paragraphs, ~330 words) | Earlier note N3 has grown: the full design walk-through sits in *Background*, which Seminar.pdf defines as the research area and technical background. | Acceptable as is. Optionally shorten it to one paragraph and move the outcome-to-status detail to 1.4.2 or Chapter 5. |
+| F10 | Minor | References [16], [22], [34], [35] | Bibliographic details are still incomplete, as listed in Section 4 above. | Complete them from publisher pages before the final report, not from memory. |
+
+### Strict readiness verdict
+
+**Not yet submission-ready, but close.** There are no Critical issues. **F1 and F2 are Major.** F1 misdescribes the approved workflow and F2 contradicts SO4. Each is a one-sentence fix.
+
+Once F1 and F2 are corrected, and ideally F3–F5, which take a few minutes, the chapter is ready to submit as a GP1 Chapter 1. The decisions still open with the supervisor (test set, target presentation, GP1/GP2 split, clinician reviewer) are disclosed honestly in the text and do not block submission. They should be recorded in the audit decision log as soon as they are made.
+
+Updated ratings after this revision:
+
+| Dimension | Rating |
+|---|---|
+| Scientific quality | 8.5 |
+| Academic structure | 8.5 |
+| Research methodology | 8.5 |
+| Citation integrity | 9 |
+| Project alignment | 8.5 (9 once F1 is fixed) |
+| Formatting | 8.5 |
+| Overall readiness | 8, rising to about 9 after F1–F2 |
